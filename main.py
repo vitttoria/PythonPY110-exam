@@ -1,9 +1,11 @@
 from conf import model
 import random
 from faker import Faker
-from itertools import repeat
-# import re
 import json
+import re
+# from itertools import cycle
+
+
 OUTPUT_FILE = "output.json"
 
 # random_book = {
@@ -29,8 +31,8 @@ OUTPUT_FILE = "output.json"
 
 def get_author():
     fake = Faker("ru")
-    # match = re.fullmatch(, string)
-    return fake.name()
+    match = re.search(r'[А-ЯЁ][а-яё]+\s+[А-ЯЁ][а-яё]+\s+', fake.name())
+    return match[0] if match else 'Not found'
 
 
 """Функция генерации стоимости книги
@@ -101,8 +103,7 @@ def get_title():
 """
 
 
-def get_pk():
-    pk = 1
+def get_pk(pk=1):
     return pk
 
 
@@ -115,33 +116,43 @@ def get_model():
     return model
 
 
-"""Создание словаря с описанием книги"""
-random_book = {"model": model,
-               "pk": get_pk,
-               }
+"""Функция генератора списка словарей
+# pk: счетчик вызова объекта
+"""
 
-"""Создание словаря внутри словаря с описанием параметров книги"""
-random_book["field"] = {"title": get_title(),
-                        "year": get_year(),
-                        "pages": get_pages(),
-                        "isnb13": get_isbn13(),
-                        "rating": get_rating(),
-                        "price": get_price(),
-                        "author": [get_author(),
-                                   get_author(),
-                                   get_author()]}
 
-"""Функция запуска генератора словарей
-# list_: список словарей
+def generator(pk):
+    book_list = []  # создаем пустой список
+    for i in range(pk, 101, 1):  # запускаем цикл с генерацией 100 словарей
+        random_book = {"model": model,  # создаем словарь с параметрами книги
+                       "pk": i,
+                       "field": {
+                           "title": get_title(),
+                           "year": get_year(),
+                           "pages": get_pages(),
+                           "isnb13": get_isbn13(),
+                           "rating": get_rating(),
+                           "price": get_price(),
+                           "author": [get_author(),
+                                      get_author(),
+                                      get_author()]}}
+        # print(random_book, i)
+        book_list.append(random_book)  # добавляем результат в словарь
+    # print(book_list)
+    with open(OUTPUT_FILE, 'w', encoding="utf-8") as f:  # открываем файл для вывода в него данных
+        j = json.dumps(book_list, ensure_ascii=False, indent=4)  # сериализуем список словарей
+        print(j)
+        f.write(j)  # записываем результат в файл
+
+
+"""Функция запроса у пользователя начального числа счетчика и запуска генератора словарей
 """
 
 
 def main():
-    for list_ in repeat(random_book, 100):
-        print(list_)
-        with open(OUTPUT_FILE, 'w'):
-            j = json.dumps(list_, ensure_ascii=False, indent=4)
-            print(j)
+    pk = int(input("Введите с какого числа начинаем вести счет\n"))  # спрашиваем у пользователя с какого числа
+    # начинаем отсчет
+    generator(pk)
 
 
 if __name__ == "__main__":
